@@ -19,7 +19,7 @@ public class GridCreator : Singleton<GridCreator>
 
     private Hexagon[,] hexagons;
 
-    private HexagonGroup[][] hexagonGroups;
+    private HexagonGroup[,] hexagonGroups;
 
     private List<Vector3> midPoints = new List<Vector3>();
 
@@ -29,6 +29,7 @@ public class GridCreator : Singleton<GridCreator>
         hexagonY = gridGO.GetComponent<SpriteRenderer>().sprite.bounds.extents.y;
 
         hexagons = new Hexagon[tileCountX, tileCountY];
+        hexagonGroups = new HexagonGroup[tileCountX - 1, tileCountY - 1];
 
         CreateGrid();
     }
@@ -47,39 +48,68 @@ public class GridCreator : Singleton<GridCreator>
                 List<int> groupingNumbers = new List<int>();
                 
 
-                if (x != 0)
+                int rightTop = 0;
+                int right = 0;
+                int rightBot = 0;
+                int leftTop = 0;
+                int left = 0;
+                int leftBot = 0;
+
+                rightTop = (tileCountX - 1) * 2 * (y - 1) + (2 * x) + (1 - (x % 2));                // PERFECT
+                leftTop = rightTop - 2;                                                             // PERFECT
+                right = rightTop + (((tileCountX - 1) * 2) - 1) * (1 - (x % 2)) + (1 * (x % 2));    // PERFECT
+                left = right - 2;                                                                   // PERFECT
+                rightBot = rightTop + ((tileCountX - 1) * 2);                                       // PERFECT
+                leftBot = leftTop + ((tileCountX - 1) * 2);                                         // PERFECT
+
+                // Top grouping rules
+                if (y != 0)
                 {
-                    if (y != 0)         
+                    if (x != 0)
                     {
                         // Write code to calculate Left-Top grouping point
 
-                        if ((x % 2) == 1)
-                        {
-                            // Write code to calculate Left grouping point
-                        }
+                        groupingNumbers.Add(leftTop);
+                        Debug.Log("x is " + x + " y is " + y + " left1-top is " + leftTop);
                     }
 
-                    if (y != (tileCountY - 1))
-                    {
-                        // Write code to calculate Left-Bottom grouping point
-                    }
-                }
-
-                if (x != (tileCountX - 1))
-                {
-                    if (y != 0)
+                    if (x != (tileCountX - 1))
                     {
                         // Write code to calculate Right-Top grouping point
 
-                        if ((x % 2) == 1)
-                        {
-                            // Write code to calculate Right grouping point
-                        }
+                        Debug.Log("x is " + x + " y is " + y + " right1-top is " + rightTop);
+                    }
+                }
+
+                // Bot grouping rules
+                if (y != (tileCountY - 1))
+                {
+                    if (x != 0)
+                    {
+                        Debug.Log("x is " + x + " y is " + y + " left2-bottom is " + leftBot);
                     }
 
-                    if (y != (tileCountY - 1))
+                    if (x != (tileCountX - 1))
                     {
-                        // Write code to calculate Right-Bottom grouping point
+                        // Write code to calculate Right-Top grouping point
+
+                        Debug.Log("x is " + x + " y is " + y + " right2-bottom is " + rightBot);
+                    }
+                }
+
+                // Sides grouping rules
+                if (x != 0)
+                {
+                    if ((y > 0 && y < (tileCountY - 1)) || (y == 0 && x % 2 == 0) || (y == (tileCountY - 1) && x % 2 == 1))
+                    {
+                        Debug.Log("x is " + x + " y is " + y + " left3 is " + left);
+                    }
+                }
+                if (x != (tileCountX - 1))
+                {
+                    if ((y > 0 && y < (tileCountY - 1)) || (y == 0 && x % 2 == 0) || (y == (tileCountY - 1) && x % 2 == 1))
+                    {
+                        Debug.Log("x is " + x + " y is " + y + " right3 is " + right);
                     }
                 }
 
