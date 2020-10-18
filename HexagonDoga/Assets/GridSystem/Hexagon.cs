@@ -9,19 +9,20 @@ public class Hexagon
     private GameObject obj;
     private bool destroyed = false;
 
-    public Hexagon(Vector3 position)
+    public Hexagon(Vector3 position, List<int> surroundingHexagonGroupingNumbers)
     {
         this.position = position;
+        this.surroundingHexagonGroupingNumbers = surroundingHexagonGroupingNumbers;
     }
 
     public void SetGameObject(GameObject obj)
     {
         this.obj = obj;
     }
-    public void SetSurroundingGroupNumbers(List<int> groupNumbers)
-    {
-        surroundingHexagonGroupingNumbers = groupNumbers;
-    }
+    //public void SetSurroundingGroupNumbers(List<int> groupNumbers)
+    //{
+    //    surroundingHexagonGroupingNumbers = groupNumbers;
+    //}
     public Vector3 GetPosition()
     {
         return position;

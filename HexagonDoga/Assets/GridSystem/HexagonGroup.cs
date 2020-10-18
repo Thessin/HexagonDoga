@@ -4,8 +4,8 @@ using UnityEngine;
 
 public class HexagonGroup
 {
-    public Vector3 position = Vector3.zero;
-    public List<int> hexagonNumbers = new List<int>();
+    private Vector3 position = Vector3.zero;
+    private List<int> hexagonNumbers = new List<int>();
 
     public HexagonGroup(Vector3 position)
     {
@@ -15,5 +15,18 @@ public class HexagonGroup
     public void AddHexagonNumber(int number)
     {
         hexagonNumbers.Add(number);
+    }
+
+    public Vector3 GetPosition()
+    {
+        return position;
+    }
+
+    public List<int> GetHexagonNumbersDeepCopy()
+    {
+        List<int> nums = new List<int>();
+        nums.AddRange(hexagonNumbers);
+
+        return nums;
     }
 }

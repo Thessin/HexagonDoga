@@ -19,7 +19,7 @@ public class GridCreator : Singleton<GridCreator>
 
     private Hexagon[,] hexagons;
 
-    private HexagonGroup[,] hexagonGroups;
+    private List<HexagonGroup> hexagonGroups = new List<HexagonGroup>();
 
     private List<Vector3> midPoints = new List<Vector3>();
 
@@ -29,13 +29,31 @@ public class GridCreator : Singleton<GridCreator>
         hexagonY = gridGO.GetComponent<SpriteRenderer>().sprite.bounds.extents.y;
 
         hexagons = new Hexagon[tileCountX, tileCountY];
-        hexagonGroups = new HexagonGroup[tileCountX - 1, tileCountY - 1];
 
         CreateGrid();
     }
 
     private void CreateGrid()
     {
+        // Creating grouping points
+        for (int y = 0; y < tileCountY - 1; y++)
+        {
+            for (int x = 0; x < tileCountX - 1; x++)
+            {
+                // For grouping points
+
+                float xPos = x * 1.5f * hexagonX + (spacing * x);
+
+                hexagonGroups.Add(new HexagonGroup(new Vector3(xPos + (hexagonX * (1.0f - (x % 2) * 0.5f)), (-2 * y * hexagonY) - (spacing * y * 1.0f), 0.0f)));
+                hexagonGroups.Add(new HexagonGroup(new Vector3(xPos + (hexagonX * (0.5f + (x % 2) * 0.5f)), (-2 * y * hexagonY) - (spacing * y * 1.0f) - hexagonY, 0.0f)));
+
+                //midPoints.Add(new Vector3(xPos + (hexagonX * (1.0f - (x % 2) * 0.5f)), (-2 * y * hexagonY) - (spacing * y * 1.0f), 0.0f));
+                //midPoints.Add(new Vector3(xPos + (hexagonX * (0.5f + (x % 2) * 0.5f)), (-2 * y * hexagonY) - (spacing * y * 1.0f) - hexagonY, 0.0f));
+                
+            }
+        }
+
+        // Creating hexagons
         for (int y = 0; y < tileCountY; y++)
         {
             for (int x = 0; x < tileCountX; x++)
@@ -43,10 +61,7 @@ public class GridCreator : Singleton<GridCreator>
                 float xPos = x * 1.5f * hexagonX + (spacing * x);
                 float yPos = ((x % 2) * (hexagonY + (spacing / 2))) + (-2 * y * hexagonY) - (spacing * y);
 
-                hexagons[x, y] = new Hexagon(new Vector3(xPos, yPos, 0.0f));        // For actual hexagon positions
-
                 List<int> groupingNumbers = new List<int>();
-                
 
                 int rightTop = 0;
                 int right = 0;
@@ -67,15 +82,16 @@ public class GridCreator : Singleton<GridCreator>
                 {
                     if (x != 0)
                     {
-                        // Write code to calculate Left-Top grouping point
-
                         groupingNumbers.Add(leftTop);
+                        hexagonGroups[leftTop].AddHexagonNumber((y * tileCountX) + x);
+
                         Debug.Log("x is " + x + " y is " + y + " left1-top is " + leftTop);
                     }
 
                     if (x != (tileCountX - 1))
                     {
-                        // Write code to calculate Right-Top grouping point
+                        groupingNumbers.Add(rightTop);
+                        hexagonGroups[rightTop].AddHexagonNumber((y * tileCountX) + x);
 
                         Debug.Log("x is " + x + " y is " + y + " right1-top is " + rightTop);
                     }
@@ -86,12 +102,16 @@ public class GridCreator : Singleton<GridCreator>
                 {
                     if (x != 0)
                     {
+                        groupingNumbers.Add(leftBot);
+                        hexagonGroups[leftBot].AddHexagonNumber((y * tileCountX) + x);
+
                         Debug.Log("x is " + x + " y is " + y + " left2-bottom is " + leftBot);
                     }
 
                     if (x != (tileCountX - 1))
                     {
-                        // Write code to calculate Right-Top grouping point
+                        groupingNumbers.Add(rightBot);
+                        hexagonGroups[rightBot].AddHexagonNumber((y * tileCountX) + x);
 
                         Debug.Log("x is " + x + " y is " + y + " right2-bottom is " + rightBot);
                     }
@@ -102,6 +122,9 @@ public class GridCreator : Singleton<GridCreator>
                 {
                     if ((y > 0 && y < (tileCountY - 1)) || (y == 0 && x % 2 == 0) || (y == (tileCountY - 1) && x % 2 == 1))
                     {
+                        groupingNumbers.Add(left);
+                        hexagonGroups[left].AddHexagonNumber((y * tileCountX) + x);
+
                         Debug.Log("x is " + x + " y is " + y + " left3 is " + left);
                     }
                 }
@@ -109,40 +132,15 @@ public class GridCreator : Singleton<GridCreator>
                 {
                     if ((y > 0 && y < (tileCountY - 1)) || (y == 0 && x % 2 == 0) || (y == (tileCountY - 1) && x % 2 == 1))
                     {
+                        groupingNumbers.Add(right);
+                        hexagonGroups[right].AddHexagonNumber((y * tileCountX) + x);
+
                         Debug.Log("x is " + x + " y is " + y + " right3 is " + right);
                     }
                 }
 
-
-                if (x < tileCountX - 1 && y < tileCountY - 1)               // For grouping points
-                {
-                    //hexagonGroups.Add(new HexagonGroup(new Vector3(xPos + (hexagonX * (1.0f - (x % 2) * 0.5f)), (-2 * y * hexagonY) - (spacing * y * 1.0f), 0.0f)));
-                    //hexagonGroups.Add(new HexagonGroup(new Vector3(xPos + (hexagonX * (0.5f + (x % 2) * 0.5f)), (-2 * y * hexagonY) - (spacing * y * 1.0f) - hexagonY, 0.0f)));
-
-                    midPoints.Add(new Vector3(xPos + (hexagonX * (1.0f - (x % 2) * 0.5f)), (-2 * y * hexagonY) - (spacing * y * 1.0f), 0.0f));
-                    midPoints.Add(new Vector3(xPos + (hexagonX * (0.5f + (x % 2) * 0.5f)), (-2 * y * hexagonY) - (spacing * y * 1.0f) - hexagonY, 0.0f));
-                }
-            }
-        }
-
-        for (int i = 0; i < midPoints.Count; i++)
-        {
-            int midPointsOnXAxis = (tileCountX - 1) * 2;    // Total mid points on the x axis.
-            int xAxisNum = i % midPointsOnXAxis;            // The number the index is on the current axis.
-            int yAxisNum = i / midPointsOnXAxis;
-
-            int a = (xAxisNum / 2) + (yAxisNum * tileCountX);
-            int b = (yAxisNum * tileCountX) + (xAxisNum/2);    //(xAxisNum + (midPointsOnXAxis * yAxisNum)) - (xAxisNum / 2) - 1 - (yAxisNum * 2);
-
-
-            switch (xAxisNum % 2)
-            {
-                case 0:
-                    Debug.Log("xAxisNum: " + xAxisNum + " for " + i + " mid point, numbers are: " + a + "  " + (a + 1) + "  " + (a + 1 + tileCountX));
-                    break;
-                case 1:
-                    Debug.Log("xAxisNum: " + xAxisNum + " for " + i + " mid point, numbers are: " + b + "  " + (b + tileCountX) + "  " + (b + tileCountX + 1));
-                    break;
+                Hexagon hex = new Hexagon(new Vector3(xPos, yPos, 0.0f), groupingNumbers);          // Create the hex object.
+                hexagons[x, y] = hex;                                                               // Add the hex object to array.
             }
         }
 
@@ -166,9 +164,9 @@ public class GridCreator : Singleton<GridCreator>
         //}
 
         // For debugging purposes, delete on prod
-        foreach (var pos in midPoints)
+        foreach (var group in hexagonGroups)
         {
-            SendHexagon(pos,0.15f);
+            SendHexagon(group.GetPosition(), 0.15f);
         }
 
 
@@ -193,21 +191,18 @@ public class GridCreator : Singleton<GridCreator>
 
         List<int> selectedHexagonNumbers = new List<int>();
 
-        for (int i = 0; i < midPoints.Count; i++)
+        for (int i = 0; i < hexagonGroups.Count; i++)
         {
-            float clickDist = Vector3.Distance(clickPos, midPoints[i]);
+            float clickDist = Vector3.Distance(clickPos, hexagonGroups[i].GetPosition());
             if (smallestDistance > clickDist)
             {
                 smallestDistance = clickDist;
-                closestPoint = midPoints[i];
+                closestPoint = hexagonGroups[i].GetPosition();
                 midPointNumber = i;
             }
         }
 
-        selectedHexagonNumbers.Add(midPointNumber / 2);
-        selectedHexagonNumbers.Add((midPointNumber / (tileCountX - 1)) * tileCountX);
-
-        foreach (var num in selectedHexagonNumbers)
+        foreach (var num in hexagonGroups[midPointNumber].GetHexagonNumbersDeepCopy())
         {
             Debug.Log("selectedHexNumber is " + num);
         }
