@@ -51,8 +51,11 @@ public class Hexagon
 
         foreach (var group in surroundingHexagonGroups)
         {
-            destroyable = true;
-            break;
+            if (group.IsExplodable())
+            {
+                destroyable = true;
+                break;
+            }
         }
 
         return destroyable;
