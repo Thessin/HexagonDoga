@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class GridCreator : Singleton<GridCreator>
@@ -36,6 +37,17 @@ public class GridCreator : Singleton<GridCreator>
     private void CreateGrid()
     {
         // Creating grouping points
+        CreateGroupingPoints();
+
+        // Creating hexagons
+        CreateHexagons();
+
+        // Showing grid
+        ShowGrid();
+    }
+    
+    private void CreateGroupingPoints()
+    {
         for (int y = 0; y < tileCountY - 1; y++)
         {
             for (int x = 0; x < tileCountX - 1; x++)
@@ -49,12 +61,15 @@ public class GridCreator : Singleton<GridCreator>
 
                 //midPoints.Add(new Vector3(xPos + (hexagonX * (1.0f - (x % 2) * 0.5f)), (-2 * y * hexagonY) - (spacing * y * 1.0f), 0.0f));
                 //midPoints.Add(new Vector3(xPos + (hexagonX * (0.5f + (x % 2) * 0.5f)), (-2 * y * hexagonY) - (spacing * y * 1.0f) - hexagonY, 0.0f));
-                
+
             }
         }
+    }
 
+    private void CreateHexagons()
+    {
         Color lastGivenColor = Color.white;
-        // Creating hexagons
+        
         for (int y = 0; y < tileCountY; y++)
         {
             for (int x = 0; x < tileCountX; x++)
@@ -146,16 +161,14 @@ public class GridCreator : Singleton<GridCreator>
                 do
                 {
                     hex.color = colors[Random.Range(0, colors.Count)];
-                } while (colors.Count > 1 && hex.color.CompareColors(lastGivenColor));              // Adding color information to the created hexagon.
+                } while (colors.Count > 1 && hex.color.IsEqualColor(lastGivenColor));              // Adding color information to the created hexagon.
                 lastGivenColor = hex.color;
 
                 hexagons[x, y] = hex;                                                               // Add the hex object to array.
             }
         }
-
-        ShowGrid();
     }
-    
+
     private void ShowGrid()
     {
         for (int y = 0; y < hexagons.GetLength(1); y++)
@@ -179,6 +192,9 @@ public class GridCreator : Singleton<GridCreator>
 
         // For debug purposes
         FindGroup(new Vector3(1, 0, 0));
+
+        CheckCanExplode();
+        CheckIfMoveExists();
     }
 
     private void SendHexagon(Hexagon hex,float scale)
@@ -224,30 +240,62 @@ public class GridCreator : Singleton<GridCreator>
 
     private void CheckCanExplode()
     {
-
+        foreach (var group in hexagonGroups)
+        {
+            if (group.IsExplodable())
+                Debug.Log("group is explodable in position " + group.GetPosition());
+        }
     }
 
-    private void CheckIfMoveExists()
+    private bool CheckIfMoveExists()
     {
+        bool result = false;
+
         for (int y = 0; y < hexagons.GetLength(1); y++)
         {
+            if (result)         // Don't need more cycles since at least a move is found.
+                break;
+
             for (int x = 0; x < hexagons.GetLength(0); x++)
             {
-                Color col = hexagons[x, y].color;
+                List<Color> surroundingColors = new List<Color>();
 
-                // Neighbour colors
-                Color colN1, colN2, colN3, colN4, colN5, colN6;
+                int[,] leftTop = { { x - 1 }, { y - (x % 2) } };
+                int[,] rightTop = { { x + 1 }, { y - (x % 2) } };
+                int[,] leftBot = { { x - 1 }, { y + 1 - (x % 2) } };
+                int[,] rightBot = { { x + 1 }, { y + 1 - (x % 2) } };
+                int[,] top = { { x }, { y - 1 } };
+                int[,] bot = { { x }, { y + 1 } };
 
-                colN1 = hexagons[x - 1, y - 1].color;
-                colN2 = hexagons[x, y - 1].color;
-                colN3 = hexagons[x + 1, y - 1].color;
-                colN4 = hexagons[x - 1, y].color;
-                colN5 = hexagons[x + 1, y].color;
+                if (x > 0)
+                {
+                    if (y > 0)
+                        surroundingColors.Add(hexagons[leftTop[0, 0], leftTop[1, 0]].color);
+                    if (y < tileCountY - 1)
+                        surroundingColors.Add(hexagons[leftBot[0, 0], leftBot[1, 0]].color);
+                }
+                if (x < tileCountX - 1)
+                {
+                    if (y > 0)
+                        surroundingColors.Add(hexagons[rightTop[0, 0], rightTop[1, 0]].color);
+                    if (y < tileCountY - 1)
+                        surroundingColors.Add(hexagons[rightBot[0, 0], rightBot[1, 0]].color);
+                }
 
-                int sameColorCount = 0;
+                if (y > 0)
+                    surroundingColors.Add(hexagons[top[0, 0], top[1, 0]].color);
+                else if (y < tileCountY - 1)
+                    surroundingColors.Add(hexagons[bot[0, 0], bot[1, 0]].color);
 
-                //if(hexagons[x-1,y].color.r==col.r && hexagons[x-1,y].color.b=col.)
+                if(surroundingColors.GroupBy(item => item).Where(item => item.Count() > 1).Sum(item => item.Count()) >= 3)
+                {
+                    Debug.Log("found a move on x:" + x + " y:" + y);
+                    result = true;
+                    break;
+                }
             }
         }
+
+        return result;
     }
 }

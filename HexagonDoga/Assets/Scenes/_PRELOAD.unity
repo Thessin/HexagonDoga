@@ -152,7 +152,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   gridGO: {fileID: 1202679603916390164, guid: 3eeeaead44f1f3544b3208c7e366315f, type: 3}
   tileCountX: 5
-  tileCountY: 3
+  tileCountY: 4
   spacing: 0.3
   colors:
   - {r: 1, g: 0, b: 0, a: 1}

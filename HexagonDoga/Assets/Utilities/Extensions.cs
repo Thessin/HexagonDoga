@@ -4,7 +4,7 @@ using UnityEngine;
 
 public static class Extensions
 {
-    public static bool CompareColors(this Color myColor, Color otherColor)
+    public static bool IsEqualColor(this Color myColor, Color otherColor)
     {
         Color32 myCol = myColor;
         Color32 otherCol = otherColor;

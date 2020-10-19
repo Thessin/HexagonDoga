@@ -34,7 +34,7 @@ public class HexagonGroup
 
     public bool IsExplodable()
     {
-        return hexagons[0].color.CompareColors(hexagons[1].color) && hexagons[0].color.CompareColors(hexagons[2].color);            // Check if all three hexagons' colors are equal.
+        return hexagons[0].color.IsEqualColor(hexagons[1].color) && hexagons[0].color.IsEqualColor(hexagons[2].color);            // Check if all three hexagons' colors are equal.
     }
 
     //public List<int> GetHexagonNumbersDeepCopy()

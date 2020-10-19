@@ -45,8 +45,16 @@ public class Hexagon
         }
     }
 
-    public void CheckDestroyable()
+    public bool CheckDestroyable()
     {
+        bool destroyable = false;
 
+        foreach (var group in surroundingHexagonGroups)
+        {
+            destroyable = true;
+            break;
+        }
+
+        return destroyable;
     }
 }
