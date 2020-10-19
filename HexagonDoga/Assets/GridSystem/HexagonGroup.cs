@@ -5,16 +5,16 @@ using UnityEngine;
 public class HexagonGroup
 {
     private Vector3 position = Vector3.zero;
-    private List<int> hexagonNumbers = new List<int>();
+    private List<Hexagon> hexagons = new List<Hexagon>();
 
     public HexagonGroup(Vector3 position)
     {
         this.position = position;
     }
 
-    public void AddHexagonNumber(int number)
+    public void AddHexagon(Hexagon hex)
     {
-        hexagonNumbers.Add(number);
+        hexagons.Add(hex);
     }
 
     public Vector3 GetPosition()
@@ -22,11 +22,26 @@ public class HexagonGroup
         return position;
     }
 
-    public List<int> GetHexagonNumbersDeepCopy()
+    public void MoveClockwise()
     {
-        List<int> nums = new List<int>();
-        nums.AddRange(hexagonNumbers);
 
-        return nums;
     }
+
+    public void MoveCounterClockwise()
+    {
+
+    }
+
+    public bool IsExplodable()
+    {
+        return hexagons[0].color.CompareColors(hexagons[1].color) && hexagons[0].color.CompareColors(hexagons[2].color);            // Check if all three hexagons' colors are equal.
+    }
+
+    //public List<int> GetHexagonNumbersDeepCopy()
+    //{
+    //    List<int> nums = new List<int>();
+    //    nums.AddRange(hexagonNumbers);
+
+    //    return nums;
+    //}
 }

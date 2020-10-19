@@ -53,6 +53,7 @@ public class GridCreator : Singleton<GridCreator>
             }
         }
 
+        Color lastGivenColor = Color.white;
         // Creating hexagons
         for (int y = 0; y < tileCountY; y++)
         {
@@ -61,7 +62,7 @@ public class GridCreator : Singleton<GridCreator>
                 float xPos = x * 1.5f * hexagonX + (spacing * x);
                 float yPos = ((x % 2) * (hexagonY + (spacing / 2))) + (-2 * y * hexagonY) - (spacing * y);
 
-                List<int> groupingNumbers = new List<int>();
+                List<HexagonGroup> groupingNumbers = new List<HexagonGroup>();
 
                 int rightTop = 0;
                 int right = 0;
@@ -82,16 +83,16 @@ public class GridCreator : Singleton<GridCreator>
                 {
                     if (x != 0)
                     {
-                        groupingNumbers.Add(leftTop);
-                        hexagonGroups[leftTop].AddHexagonNumber((y * tileCountX) + x);
+                        groupingNumbers.Add(hexagonGroups[leftTop]);
+                        //hexagonGroups[leftTop].AddHexagonNumber((y * tileCountX) + x);
 
                         Debug.Log("x is " + x + " y is " + y + " left1-top is " + leftTop);
                     }
 
                     if (x != (tileCountX - 1))
                     {
-                        groupingNumbers.Add(rightTop);
-                        hexagonGroups[rightTop].AddHexagonNumber((y * tileCountX) + x);
+                        groupingNumbers.Add(hexagonGroups[rightTop]);
+                        //hexagonGroups[rightTop].AddHexagonNumber((y * tileCountX) + x);
 
                         Debug.Log("x is " + x + " y is " + y + " right1-top is " + rightTop);
                     }
@@ -102,16 +103,16 @@ public class GridCreator : Singleton<GridCreator>
                 {
                     if (x != 0)
                     {
-                        groupingNumbers.Add(leftBot);
-                        hexagonGroups[leftBot].AddHexagonNumber((y * tileCountX) + x);
+                        groupingNumbers.Add(hexagonGroups[leftBot]);
+                        //hexagonGroups[leftBot].AddHexagonNumber((y * tileCountX) + x);
 
                         Debug.Log("x is " + x + " y is " + y + " left2-bottom is " + leftBot);
                     }
 
                     if (x != (tileCountX - 1))
                     {
-                        groupingNumbers.Add(rightBot);
-                        hexagonGroups[rightBot].AddHexagonNumber((y * tileCountX) + x);
+                        groupingNumbers.Add(hexagonGroups[rightBot]);
+                        //hexagonGroups[rightBot].AddHexagonNumber((y * tileCountX) + x);
 
                         Debug.Log("x is " + x + " y is " + y + " right2-bottom is " + rightBot);
                     }
@@ -122,8 +123,8 @@ public class GridCreator : Singleton<GridCreator>
                 {
                     if ((y > 0 && y < (tileCountY - 1)) || (y == 0 && x % 2 == 0) || (y == (tileCountY - 1) && x % 2 == 1))
                     {
-                        groupingNumbers.Add(left);
-                        hexagonGroups[left].AddHexagonNumber((y * tileCountX) + x);
+                        groupingNumbers.Add(hexagonGroups[left]);
+                        //hexagonGroups[left].AddHexagonNumber((y * tileCountX) + x);
 
                         Debug.Log("x is " + x + " y is " + y + " left3 is " + left);
                     }
@@ -132,14 +133,22 @@ public class GridCreator : Singleton<GridCreator>
                 {
                     if ((y > 0 && y < (tileCountY - 1)) || (y == 0 && x % 2 == 0) || (y == (tileCountY - 1) && x % 2 == 1))
                     {
-                        groupingNumbers.Add(right);
-                        hexagonGroups[right].AddHexagonNumber((y * tileCountX) + x);
+                        groupingNumbers.Add(hexagonGroups[right]);
+                        //hexagonGroups[right].AddHexagonNumber((y * tileCountX) + x);
 
                         Debug.Log("x is " + x + " y is " + y + " right3 is " + right);
                     }
                 }
 
                 Hexagon hex = new Hexagon(new Vector3(xPos, yPos, 0.0f), groupingNumbers);          // Create the hex object.
+                hex.RegisterToHexagonGroup();                                                       // Registering the hexagon to it's related group.
+
+                do
+                {
+                    hex.color = colors[Random.Range(0, colors.Count)];
+                } while (colors.Count > 1 && hex.color.CompareColors(lastGivenColor));              // Adding color information to the created hexagon.
+                lastGivenColor = hex.color;
+
                 hexagons[x, y] = hex;                                                               // Add the hex object to array.
             }
         }
@@ -153,8 +162,7 @@ public class GridCreator : Singleton<GridCreator>
         {
             for (int x = 0; x < hexagons.GetLength(0); x++)
             {
-                Debug.Log("x is " + x + " y is " + y);
-                SendHexagon(hexagons[x, y].GetPosition(), 1.0f);
+                SendHexagon(hexagons[x, y], 1.0f);
             }
         }
 
@@ -163,24 +171,27 @@ public class GridCreator : Singleton<GridCreator>
         //    SendHexagon(pos,1.0f);
         //}
 
-        // For debugging purposes, delete on prod
-        foreach (var group in hexagonGroups)
-        {
-            SendHexagon(group.GetPosition(), 0.15f);
-        }
+        //// For debugging purposes, delete on prod
+        //foreach (var group in hexagonGroups)
+        //{
+        //    SendHexagon(group.GetPosition(), 0.15f);
+        //}
 
-
+        // For debug purposes
         FindGroup(new Vector3(1, 0, 0));
     }
 
-    private void SendHexagon(Vector3 pos,float scale)
+    private void SendHexagon(Hexagon hex,float scale)
     {
+        // TODO: Animate sending hexagon to its place when DOTween is added to the project.
+
         GameObject obj = Instantiate(gridGO);
+        Vector3 pos = hex.GetPosition();
 
         obj.transform.position = new Vector3(pos.x, pos.y, pos.z);
         obj.transform.localScale = new Vector3(scale, scale, scale);
-        if (colors.Count != 0)
-            obj.GetComponent<SpriteRenderer>().color = colors[Random.Range(0, colors.Count)];
+
+        obj.GetComponent<SpriteRenderer>().color = hex.color;
     }
 
     private void FindGroup(Vector3 clickPos)
@@ -202,11 +213,41 @@ public class GridCreator : Singleton<GridCreator>
             }
         }
 
-        foreach (var num in hexagonGroups[midPointNumber].GetHexagonNumbersDeepCopy())
-        {
-            Debug.Log("selectedHexNumber is " + num);
-        }
 
+        //// TODO: Delete, for debugging purposes only
+        //foreach (var num in hexagonGroups[midPointNumber].GetHexagonNumbersDeepCopy())
+        //{
+        //    Debug.Log("selectedHexNumber is " + num);
+        //}
         Debug.Log("closest groupPoint to " + clickPos + " is " + closestPoint + " with a distance of " + smallestDistance);
+    }
+
+    private void CheckCanExplode()
+    {
+
+    }
+
+    private void CheckIfMoveExists()
+    {
+        for (int y = 0; y < hexagons.GetLength(1); y++)
+        {
+            for (int x = 0; x < hexagons.GetLength(0); x++)
+            {
+                Color col = hexagons[x, y].color;
+
+                // Neighbour colors
+                Color colN1, colN2, colN3, colN4, colN5, colN6;
+
+                colN1 = hexagons[x - 1, y - 1].color;
+                colN2 = hexagons[x, y - 1].color;
+                colN3 = hexagons[x + 1, y - 1].color;
+                colN4 = hexagons[x - 1, y].color;
+                colN5 = hexagons[x + 1, y].color;
+
+                int sameColorCount = 0;
+
+                //if(hexagons[x-1,y].color.r==col.r && hexagons[x-1,y].color.b=col.)
+            }
+        }
     }
 }
