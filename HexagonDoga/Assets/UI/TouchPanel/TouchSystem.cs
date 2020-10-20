@@ -11,7 +11,6 @@ public class TouchSystem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
 
     private Vector2 dragStartVec = Vector2.zero;
     private Vector2 dragLastVec = Vector2.zero;
-    private Vector2 dragEndVec = Vector2.zero;
 
     private float totalDegreesTurned = 0.0f;
     private bool dragging = false;
@@ -22,18 +21,24 @@ public class TouchSystem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
         img = GetComponent<Image>();
     }
 
+    /// <summary>
+    /// Called when dragging begun. To set the initial datas.
+    /// </summary>
+    /// <param name="eventData"></param>
     public void OnBeginDrag(PointerEventData eventData)
     {
-        Debug.Log("on begin drag");
         dragStartVec = eventData.position;
         dragLastVec = dragStartVec;
 
         dragging = true;
     }
 
+    /// <summary>
+    /// Called when a drag is happening. To calculate dragging rotation.
+    /// </summary>
+    /// <param name="eventData"></param>
     public void OnDrag(PointerEventData eventData)
     {
-        Debug.Log("on drag");
         Vector2 dragCurrentVec = eventData.position - dragStartVec;
 
         float adding = Mathf.Atan2(dragLastVec.x * dragCurrentVec.y - dragLastVec.y * dragCurrentVec.x, dragLastVec.x * dragCurrentVec.x + dragLastVec.y * dragCurrentVec.y) * Mathf.Rad2Deg;
@@ -43,23 +48,26 @@ public class TouchSystem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
         dragLastVec = dragCurrentVec;
     }
 
+    /// <summary>
+    /// Called on the end of a drag. To reset the datas.
+    /// </summary>
+    /// <param name="eventData"></param>
     public void OnEndDrag(PointerEventData eventData)
     {
-        Debug.Log("on end drag");
         CalculateClockwiseRotation();
 
         dragStartVec = Vector2.zero;
         dragLastVec = Vector2.zero;
-        dragEndVec = Vector2.zero;
 
         totalDegreesTurned = 0.0f;
     }
 
+    /// <summary>
+    /// Called on pointer is clicked. For selecting a HexagonGroup.
+    /// </summary>
+    /// <param name="eventData"></param>
     public void OnPointerClick(PointerEventData eventData)
     {
-        Debug.Log("press pos is " + eventData.pressPosition);
-        Debug.Log("camera is " + cam.ScreenToWorldPoint(eventData.pressPosition));
-
         if (dragging)
         {
             dragging = false;
@@ -69,6 +77,9 @@ public class TouchSystem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
         GridCreator.Instance.SelectGroup(cam.ScreenToWorldPoint(new Vector3(eventData.pressPosition.x, eventData.pressPosition.y, -cam.transform.position.z)));
     }
 
+    /// <summary>
+    /// Calculates the dragging rotation.
+    /// </summary>
     private void CalculateClockwiseRotation()
     {
         if (totalDegreesTurned > 0)

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using DG.Tweening;
 
 public class GridCreator : Singleton<GridCreator>
 {
@@ -25,8 +26,9 @@ public class GridCreator : Singleton<GridCreator>
     private List<Vector3> midPoints = new List<Vector3>();
 
     private HexagonGroup selectedGroup;
-    private bool groupSelected = false;
     private List<GameObject> selectionObjects = new List<GameObject>();
+
+    private float sendHexagonAnimationDuration = 1.2f;
 
     private void Start()
     {
@@ -38,6 +40,9 @@ public class GridCreator : Singleton<GridCreator>
         CreateGrid();
     }
 
+    /// <summary>
+    /// Create the grid.
+    /// </summary>
     private void CreateGrid()
     {
         // Creating grouping points
@@ -50,6 +55,9 @@ public class GridCreator : Singleton<GridCreator>
         ShowGrid();
     }
     
+    /// <summary>
+    /// Create grouping points(HexagonGroups).
+    /// </summary>
     private void CreateGroupingPoints()
     {
         for (int y = 0; y < tileCountY - 1; y++)
@@ -62,14 +70,13 @@ public class GridCreator : Singleton<GridCreator>
 
                 hexagonGroups.Add(new HexagonGroup(new Vector3(xPos + (hexagonX * (1.0f - (x % 2) * 0.5f)), (-2 * y * hexagonY) - (spacing * y * 1.0f), 0.0f), (x * y)));
                 hexagonGroups.Add(new HexagonGroup(new Vector3(xPos + (hexagonX * (0.5f + (x % 2) * 0.5f)), (-2 * y * hexagonY) - (spacing * y * 1.0f) - hexagonY, 0.0f), (x * y) + 1));
-
-                //midPoints.Add(new Vector3(xPos + (hexagonX * (1.0f - (x % 2) * 0.5f)), (-2 * y * hexagonY) - (spacing * y * 1.0f), 0.0f));
-                //midPoints.Add(new Vector3(xPos + (hexagonX * (0.5f + (x % 2) * 0.5f)), (-2 * y * hexagonY) - (spacing * y * 1.0f) - hexagonY, 0.0f));
-
             }
         }
     }
 
+    /// <summary>
+    /// Create the hexagons.
+    /// </summary>
     private void CreateHexagons()
     {
         Color lastGivenColor = Color.white;
@@ -173,6 +180,9 @@ public class GridCreator : Singleton<GridCreator>
         }
     }
 
+    /// <summary>
+    /// Show grid to the user.
+    /// </summary>
     private void ShowGrid()
     {
         for (int y = 0; y < hexagons.GetLength(1); y++)
@@ -182,41 +192,35 @@ public class GridCreator : Singleton<GridCreator>
                 SendHexagon(hexagons[x, y]);
             }
         }
-
-        //// For debug purposes
-        //FindGroup(new Vector3(1, 0, 0));
-
-        CheckCanExplode();
-        CheckIfMoveExists();
     }
 
-    private void SendHexagon(Hexagon hex)
+    /// <summary>
+    /// Send hexagon to its specified place.
+    /// </summary>
+    /// <param name="hex"></param>
+    /// <param name="cb"></param>
+    private void SendHexagon(Hexagon hex, TweenCallback cb = null)
     {
-        // TODO: Animate sending hexagon to its place when DOTween is added to the project.
-
         GameObject obj = Instantiate(gridGO);
         Vector3 pos = hex.GetPosition();
 
-        obj.transform.position = new Vector3(pos.x, pos.y, pos.z);
+        obj.transform.position = CameraSystem.Instance.GetCamPosition();
+        obj.transform.DOMove(new Vector3(pos.x, pos.y, pos.z), sendHexagonAnimationDuration).OnComplete(cb);
 
         obj.GetComponent<SpriteRenderer>().color = hex.color;
 
         hex.SetGameObject(obj);
     }
 
+    /// <summary>
+    /// Select a group.
+    /// </summary>
+    /// <param name="clickPos"></param>
     public void SelectGroup(Vector3 clickPos)
     {
-        if (groupSelected)      // When a selection already exists, clear it.
+        if (selectedGroup != null)      // When a selection already exists, clear it.
         {
-            Debug.Log("attempting delete group");
-
-            foreach (var obj in selectionObjects)
-            {
-                Debug.Log("in selectionObjects");
-                Destroy(obj);
-            }
-            selectionObjects.Clear();
-            groupSelected = false;
+            RemoveSelection();
 
             return;
         }
@@ -244,27 +248,30 @@ public class GridCreator : Singleton<GridCreator>
             selectionObjects.Add(obj);
         }
 
-        groupSelected = true;
-
-        //// TODO: Delete, for debugging purposes only
-        //foreach (var num in hexagonGroups[midPointNumber].GetHexagonNumbersDeepCopy())
-        //{
-        //    Debug.Log("selectedHexNumber is " + num);
-        //}
         Debug.Log("closest groupPoint to " + clickPos + " is " + closestPoint + " with a distance of " + smallestDistance);
         Debug.Log("selected grouping is " + midPointNumber);
     }
 
-    private void CheckCanExplode()
+    /// <summary>
+    /// Remove the current group selection.
+    /// </summary>
+    public void RemoveSelection()
     {
-        foreach (var group in hexagonGroups)
+        Debug.Log("attempting to delete selection objects");
+
+        foreach (var obj in selectionObjects)
         {
-            if (group.IsExplodable())
-                Debug.Log("group is explodable in position " + group.GetPosition());
+            Debug.Log("in selectionObjects");
+            Destroy(obj);
         }
+        selectionObjects.Clear();
+        selectedGroup = null;
     }
 
-    private bool CheckIfMoveExists()
+    /// <summary>
+    /// Check to see if any move exists. 
+    /// </summary>
+    public void CheckIfMoveExists()
     {
         bool result = false;
 
@@ -313,11 +320,41 @@ public class GridCreator : Singleton<GridCreator>
             }
         }
 
-        return result;
+        if (!result) GameManager.Instance.GameFinished();   // If no more move can be made, the game is finished.
     }
 
+    /// <summary>
+    /// When a hexagon is destroyed, it calls this function to make GridCreator create another one to replace.
+    /// </summary>
+    /// <param name="hex"></param>
+    public void HexagonDestroyed(Hexagon hex)
+    {
+        hex.color = colors[Random.Range(0, colors.Count)];
+
+        SendHexagon(hex,()=> {
+            ExplodeAllDestructibleGroups();
+            });
+    }
+
+    /// <summary>
+    /// Explodes all groups that can be destructed. Needs to be called after new set of hexagons were created and they move into their places.
+    /// </summary>
+    private void ExplodeAllDestructibleGroups()
+    {
+        foreach (var group in hexagonGroups)
+        {
+            if (group.IsExplodable())
+                group.DestroyGroup();
+        }
+    }
+
+    /// <summary>
+    /// Turn the selected HexagonGroup.
+    /// </summary>
+    /// <param name="clockWise"></param>
     public void TurnSelected(bool clockWise)
     {
-        selectedGroup.RotateGroup(clockWise);
+        if (selectedGroup != null)
+            selectedGroup.RotateGroup(clockWise);
     }
 }

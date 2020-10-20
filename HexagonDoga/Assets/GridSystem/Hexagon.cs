@@ -1,16 +1,22 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using DG.Tweening;
 
 public class Hexagon
 {
     private Vector3 position = Vector3.zero;
     private List<HexagonGroup> surroundingHexagonGroups = new List<HexagonGroup>();
 
-    private int x, y;   // X,Y locations of the this hexagon on the grid.
+    public int x, y;   // X,Y locations of the this hexagon on the grid.
 
     public GameObject obj;
-    public Color color;
+    private Color colr;
+    public Color color { get { Debug.LogError("COLOR GET FOR X:" + x + " Y:" + y + " with color:" + colr); return colr; }
+        set { Debug.LogError("COLOR SET FOR X:" + x + " Y:" + y + " with color:" + value); colr = value; } }
+
+    private float animationDuration = 0.5f;
+    private int pointsToAdd = 5;        // Points to add when this instance is destroyed.
 
     private bool destroyed = false;
 
@@ -22,6 +28,10 @@ public class Hexagon
         this.y = y;
     }
 
+    /// <summary>
+    /// Set GameObject to manipulate for this instance.
+    /// </summary>
+    /// <param name="obj"></param>
     public void SetGameObject(GameObject obj)
     {
         destroyed = false;
@@ -29,17 +39,31 @@ public class Hexagon
         this.obj = obj;
     }
 
+    /// <summary>
+    /// Returns this instance's position.
+    /// </summary>
+    /// <returns></returns>
     public Vector3 GetPosition()
     {
         return position;
     }
 
+    /// <summary>
+    /// Returns this instance's gameobject's transform.
+    /// </summary>
+    /// <returns></returns>
     public Transform GetTransform()
     {
         return obj.transform;
     }
 
-    public void ExchangeData(GameObject obj, Color color)
+    /// <summary>
+    /// Exchanges necessary data for moving between hexagons.
+    /// </summary>
+    /// <param name="obj"></param>
+    /// <param name="color"></param>
+    /// <param name="cb"></param>
+    public void ExchangeData(GameObject obj, Color color, TweenCallback cb)
     {
         this.obj = obj;
         this.color = color;
@@ -47,24 +71,40 @@ public class Hexagon
         Debug.Log("moving from " + obj.transform.position + " to " + position);
 
         // TODO: Animate this with DOTween.
-        obj.transform.position = position;
+        obj.transform.DOMove(position, animationDuration).OnComplete(cb);
     }
 
+    /// <summary>
+    /// Returns the destroyed state of this hexagon.
+    /// </summary>
+    /// <returns></returns>
     public bool IsDestroyed()
     {
         return destroyed;
     }
 
+    /// <summary>
+    /// Destroys this hexagon.
+    /// </summary>
     public void DestroyHexagon()
     {
+        if (destroyed) return;
+
         destroyed = true;
 
-        Debug.LogWarning("DESTROYING HEXAGON ON " + position + " of the grid:" + x + "," + y);
+        Debug.LogWarning("DESTROYING HEXAGON ON " + position + " of the grid x: " + x + ", y: " + y + " color: " + color);
         GameObject.Destroy(obj);
-        // TODO: Add 5 points to scoreboard.
+        
+        GridCreator.Instance.HexagonDestroyed(this);
+
+        ScoringSystem.Instance.AddScore(pointsToAdd);
+
         // TODO: Play animation for hexagon gameobject when DOTween is added.
     }
 
+    /// <summary>
+    /// Registers itself to the hexagon groups that this instance has relations with.
+    /// </summary>
     public void RegisterToHexagonGroup()
     {
         foreach (var group in surroundingHexagonGroups)
@@ -73,6 +113,10 @@ public class Hexagon
         }
     }
 
+    /// <summary>
+    /// Returns true if any of this hexagon's attached groups is destroyable and destroys that group.
+    /// </summary>
+    /// <returns></returns>
     public bool IsGroupDestroyable()
     {
         bool destroyable = false;
