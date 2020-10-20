@@ -5,8 +5,8 @@ using UnityEngine;
 
 public class GridCreator : Singleton<GridCreator>
 {
-    [SerializeField]
-    private GameObject gridGO;
+    [SerializeField] private GameObject gridGO;
+    [SerializeField] private GameObject selectionGO;
 
     private float hexagonX = 0.0f;
     private float hexagonY = 0.0f;
@@ -23,6 +23,10 @@ public class GridCreator : Singleton<GridCreator>
     private List<HexagonGroup> hexagonGroups = new List<HexagonGroup>();
 
     private List<Vector3> midPoints = new List<Vector3>();
+
+    private HexagonGroup selectedGroup;
+    private bool groupSelected = false;
+    private List<GameObject> selectionObjects = new List<GameObject>();
 
     private void Start()
     {
@@ -56,8 +60,8 @@ public class GridCreator : Singleton<GridCreator>
 
                 float xPos = x * 1.5f * hexagonX + (spacing * x);
 
-                hexagonGroups.Add(new HexagonGroup(new Vector3(xPos + (hexagonX * (1.0f - (x % 2) * 0.5f)), (-2 * y * hexagonY) - (spacing * y * 1.0f), 0.0f)));
-                hexagonGroups.Add(new HexagonGroup(new Vector3(xPos + (hexagonX * (0.5f + (x % 2) * 0.5f)), (-2 * y * hexagonY) - (spacing * y * 1.0f) - hexagonY, 0.0f)));
+                hexagonGroups.Add(new HexagonGroup(new Vector3(xPos + (hexagonX * (1.0f - (x % 2) * 0.5f)), (-2 * y * hexagonY) - (spacing * y * 1.0f), 0.0f), (x * y)));
+                hexagonGroups.Add(new HexagonGroup(new Vector3(xPos + (hexagonX * (0.5f + (x % 2) * 0.5f)), (-2 * y * hexagonY) - (spacing * y * 1.0f) - hexagonY, 0.0f), (x * y) + 1));
 
                 //midPoints.Add(new Vector3(xPos + (hexagonX * (1.0f - (x % 2) * 0.5f)), (-2 * y * hexagonY) - (spacing * y * 1.0f), 0.0f));
                 //midPoints.Add(new Vector3(xPos + (hexagonX * (0.5f + (x % 2) * 0.5f)), (-2 * y * hexagonY) - (spacing * y * 1.0f) - hexagonY, 0.0f));
@@ -155,7 +159,7 @@ public class GridCreator : Singleton<GridCreator>
                     }
                 }
 
-                Hexagon hex = new Hexagon(new Vector3(xPos, yPos, 0.0f), groupingNumbers);          // Create the hex object.
+                Hexagon hex = new Hexagon(new Vector3(xPos, yPos, 0.0f), groupingNumbers, x, y);          // Create the hex object.
                 hex.RegisterToHexagonGroup();                                                       // Registering the hexagon to it's related group.
 
                 do
@@ -175,29 +179,18 @@ public class GridCreator : Singleton<GridCreator>
         {
             for (int x = 0; x < hexagons.GetLength(0); x++)
             {
-                SendHexagon(hexagons[x, y], 1.0f);
+                SendHexagon(hexagons[x, y]);
             }
         }
 
-        //foreach (var pos in hexagonPositions)
-        //{
-        //    SendHexagon(pos,1.0f);
-        //}
-
-        //// For debugging purposes, delete on prod
-        //foreach (var group in hexagonGroups)
-        //{
-        //    SendHexagon(group.GetPosition(), 0.15f);
-        //}
-
-        // For debug purposes
-        FindGroup(new Vector3(1, 0, 0));
+        //// For debug purposes
+        //FindGroup(new Vector3(1, 0, 0));
 
         CheckCanExplode();
         CheckIfMoveExists();
     }
 
-    private void SendHexagon(Hexagon hex,float scale)
+    private void SendHexagon(Hexagon hex)
     {
         // TODO: Animate sending hexagon to its place when DOTween is added to the project.
 
@@ -205,18 +198,32 @@ public class GridCreator : Singleton<GridCreator>
         Vector3 pos = hex.GetPosition();
 
         obj.transform.position = new Vector3(pos.x, pos.y, pos.z);
-        obj.transform.localScale = new Vector3(scale, scale, scale);
 
         obj.GetComponent<SpriteRenderer>().color = hex.color;
+
+        hex.SetGameObject(obj);
     }
 
-    private void FindGroup(Vector3 clickPos)
+    public void SelectGroup(Vector3 clickPos)
     {
+        if (groupSelected)      // When a selection already exists, clear it.
+        {
+            Debug.Log("attempting delete group");
+
+            foreach (var obj in selectionObjects)
+            {
+                Debug.Log("in selectionObjects");
+                Destroy(obj);
+            }
+            selectionObjects.Clear();
+            groupSelected = false;
+
+            return;
+        }
+
         Vector3 closestPoint = Vector3.zero;
         float smallestDistance = float.MaxValue;
         int midPointNumber = 0;
-
-        List<int> selectedHexagonNumbers = new List<int>();
 
         for (int i = 0; i < hexagonGroups.Count; i++)
         {
@@ -229,6 +236,15 @@ public class GridCreator : Singleton<GridCreator>
             }
         }
 
+        selectedGroup = hexagonGroups[midPointNumber];
+
+        foreach (var trans in hexagonGroups[midPointNumber].GetHexagonsTransformList())
+        {
+            GameObject obj = Instantiate(selectionGO, trans);
+            selectionObjects.Add(obj);
+        }
+
+        groupSelected = true;
 
         //// TODO: Delete, for debugging purposes only
         //foreach (var num in hexagonGroups[midPointNumber].GetHexagonNumbersDeepCopy())
@@ -236,6 +252,7 @@ public class GridCreator : Singleton<GridCreator>
         //    Debug.Log("selectedHexNumber is " + num);
         //}
         Debug.Log("closest groupPoint to " + clickPos + " is " + closestPoint + " with a distance of " + smallestDistance);
+        Debug.Log("selected grouping is " + midPointNumber);
     }
 
     private void CheckCanExplode()
@@ -297,5 +314,10 @@ public class GridCreator : Singleton<GridCreator>
         }
 
         return result;
+    }
+
+    public void TurnSelected(bool clockWise)
+    {
+        selectedGroup.RotateGroup(clockWise);
     }
 }
