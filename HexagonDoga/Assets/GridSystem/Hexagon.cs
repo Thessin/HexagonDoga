@@ -11,9 +11,7 @@ public class Hexagon
     public int x, y;   // X,Y locations of the this hexagon on the grid.
 
     public GameObject obj;
-    private Color colr;
-    public Color color { get { Debug.LogError("COLOR GET FOR X:" + x + " Y:" + y + " with color:" + colr); return colr; }
-        set { Debug.LogError("COLOR SET FOR X:" + x + " Y:" + y + " with color:" + value); colr = value; } }
+    public Color color;
 
     private float animationDuration = 0.5f;
     private int pointsToAdd = 5;        // Points to add when this instance is destroyed.
@@ -94,8 +92,6 @@ public class Hexagon
 
         Debug.LogWarning("DESTROYING HEXAGON ON " + position + " of the grid x: " + x + ", y: " + y + " color: " + color);
         GameObject.Destroy(obj);
-        
-        GridCreator.Instance.HexagonDestroyed(this);
 
         ScoringSystem.Instance.AddScore(pointsToAdd);
 

@@ -166,8 +166,7 @@ public class HexagonGroup
             hex.DestroyHexagon();
         }
 
-        GridCreator.Instance.RemoveSelection();
-        GridCreator.Instance.CheckIfMoveExists();
+        GridCreator.Instance.HexagonsDestroyed(hexagons);
     }
 
     /// <summary>

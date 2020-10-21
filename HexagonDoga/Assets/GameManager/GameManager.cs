@@ -7,12 +7,16 @@ public class GameManager : Singleton<GameManager>
     [SerializeField] private GameObject gameOverGO;
     [SerializeField] private Transform mainCanvasTrans;
 
+    private bool gameFinished = false;
+
     /// <summary>
     /// Things to do after a GameRestart call is made.
     /// </summary>
     public void GameRestart()
     {
-
+        gameFinished = false;
+        GridCreator.Instance.RecreateGrid();
+        ScoringSystem.Instance.ResetScore();
     }
 
     /// <summary>
@@ -20,6 +24,10 @@ public class GameManager : Singleton<GameManager>
     /// </summary>
     public void GameFinished()
     {
-        Instantiate(gameOverGO, mainCanvasTrans);
+        if (!gameFinished)
+        {
+            Instantiate(gameOverGO, mainCanvasTrans);
+            gameFinished = true;
+        }
     }
 }

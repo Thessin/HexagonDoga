@@ -8,6 +8,7 @@ public class ScoringSystem : Singleton<ScoringSystem>
     [SerializeField] private TextMeshProUGUI scoreText;
 
     private int currentScore = 0;
+    private int bombPerXScore = 25;       // Attach bomb per x score.
 
     private void Start()
     {
@@ -21,6 +22,9 @@ public class ScoringSystem : Singleton<ScoringSystem>
     public void AddScore(int points)
     {
         currentScore += points;
+
+        if (currentScore % bombPerXScore == 0)
+            GridCreator.Instance.AttachBombToRandom();
 
         UpdateScoreText();
     }
@@ -40,5 +44,14 @@ public class ScoringSystem : Singleton<ScoringSystem>
     public int GetScore()
     {
         return currentScore;
+    }
+
+    /// <summary>
+    /// Resets score.
+    /// </summary>
+    public void ResetScore()
+    {
+        currentScore = 0;
+        UpdateScoreText();
     }
 }

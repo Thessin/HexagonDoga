@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using DG.Tweening;
+using UnityEngine.Events;
 
 public class GridCreator : Singleton<GridCreator>
 {
     [SerializeField] private GameObject gridGO;
     [SerializeField] private GameObject selectionGO;
+    [SerializeField] private GameObject bombGO;
 
     private float hexagonX = 0.0f;
     private float hexagonY = 0.0f;
@@ -22,13 +24,14 @@ public class GridCreator : Singleton<GridCreator>
     private Hexagon[,] hexagons;
 
     private List<HexagonGroup> hexagonGroups = new List<HexagonGroup>();
-
     private List<Vector3> midPoints = new List<Vector3>();
 
     private HexagonGroup selectedGroup;
     private List<GameObject> selectionObjects = new List<GameObject>();
 
-    private float sendHexagonAnimationDuration = 1.2f;
+    private float sendHexagonAnimationDuration = 0.4f;
+
+    public UnityEvent OnActionMade;     // Invoked when user tried to make a move.
 
     private void Start()
     {
@@ -36,6 +39,8 @@ public class GridCreator : Singleton<GridCreator>
         hexagonY = gridGO.GetComponent<SpriteRenderer>().sprite.bounds.extents.y;
 
         hexagons = new Hexagon[tileCountX, tileCountY];
+
+        OnActionMade = new UnityEvent();
 
         CreateGrid();
     }
@@ -199,17 +204,19 @@ public class GridCreator : Singleton<GridCreator>
     /// </summary>
     /// <param name="hex"></param>
     /// <param name="cb"></param>
-    private void SendHexagon(Hexagon hex, TweenCallback cb = null)
+    private Tween SendHexagon(Hexagon hex)
     {
         GameObject obj = Instantiate(gridGO);
         Vector3 pos = hex.GetPosition();
 
         obj.transform.position = CameraSystem.Instance.GetCamPosition();
-        obj.transform.DOMove(new Vector3(pos.x, pos.y, pos.z), sendHexagonAnimationDuration).OnComplete(cb);
+        Tween t = obj.transform.DOMove(new Vector3(pos.x, pos.y, pos.z), sendHexagonAnimationDuration);
 
         obj.GetComponent<SpriteRenderer>().color = hex.color;
 
         hex.SetGameObject(obj);
+
+        return t;
     }
 
     /// <summary>
@@ -324,16 +331,27 @@ public class GridCreator : Singleton<GridCreator>
     }
 
     /// <summary>
-    /// When a hexagon is destroyed, it calls this function to make GridCreator create another one to replace.
+    /// When a group of hexagons are destroyed, this function is called to make GridCreator create another set of hexagon objects.
     /// </summary>
     /// <param name="hex"></param>
-    public void HexagonDestroyed(Hexagon hex)
+    public void HexagonsDestroyed(List<Hexagon> hexList)
     {
-        hex.color = colors[Random.Range(0, colors.Count)];
+        Sequence seq = DOTween.Sequence();
 
-        SendHexagon(hex,()=> {
+        foreach (var hex in hexList)
+        {
+            hex.color = colors[Random.Range(0, colors.Count)];
+
+            seq.Append(SendHexagon(hex));
+        }
+
+        seq.OnComplete(() =>
+        {
             ExplodeAllDestructibleGroups();
-            });
+        });
+
+        RemoveSelection();
+        CheckIfMoveExists();
     }
 
     /// <summary>
@@ -341,11 +359,21 @@ public class GridCreator : Singleton<GridCreator>
     /// </summary>
     private void ExplodeAllDestructibleGroups()
     {
+        Debug.LogWarning("EXPLODING ALL DESTRUCTIBLE GROUPS");
+
+        bool foundDestructible = false;
+
         foreach (var group in hexagonGroups)
         {
             if (group.IsExplodable())
+            {
                 group.DestroyGroup();
+                foundDestructible = true;
+            }
         }
+
+        if (!foundDestructible)         // If no destructible group is left, then the user action is finished.
+            OnActionMade?.Invoke();
     }
 
     /// <summary>
@@ -355,6 +383,32 @@ public class GridCreator : Singleton<GridCreator>
     public void TurnSelected(bool clockWise)
     {
         if (selectedGroup != null)
+        {
             selectedGroup.RotateGroup(clockWise);
+            //OnActionMade?.Invoke();
+        }
+    }
+
+    /// <summary>
+    /// Attaches a bomb to a random hexagon.
+    /// </summary>
+    public void AttachBombToRandom()
+    {
+        Instantiate(bombGO, hexagons[Random.Range(0, tileCountX), Random.Range(0, tileCountY)].GetTransform());
+    }
+
+    /// <summary>
+    /// Recreates the grid.
+    /// </summary>
+    public void RecreateGrid()
+    {
+        foreach (var hex in hexagons)
+        {
+            Destroy(hex.obj);
+        }
+
+        hexagonGroups.Clear();
+
+        CreateGrid();
     }
 }

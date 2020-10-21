@@ -46,6 +46,7 @@ MonoBehaviour:
   gridGO: {fileID: 1202679603916390164, guid: 3eeeaead44f1f3544b3208c7e366315f, type: 3}
   selectionGO: {fileID: 3225175973640567351, guid: 9c1ccd196f62f554a885004662d25754,
     type: 3}
+  bombGO: {fileID: 1982912760873462584, guid: 93eee625148934445bd60b6158057559, type: 3}
   tileCountX: 8
   tileCountY: 9
   spacing: 0.3
@@ -55,3 +56,6 @@ MonoBehaviour:
   - {r: 0.6085167, g: 0, b: 1, a: 1}
   - {r: 0, g: 1, b: 0.3105998, a: 1}
   - {r: 1, g: 0, b: 0.82385063, a: 1}
+  OnActionMade:
+    m_PersistentCalls:
+      m_Calls: []

@@ -27,5 +27,6 @@ public class GameOverScreen : MonoBehaviour
     private void TryAgain()
     {
         GameManager.Instance.GameRestart();
+        Destroy(gameObject);
     }
 }
