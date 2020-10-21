@@ -24,7 +24,7 @@ public class ScoringSystem : Singleton<ScoringSystem>
         currentScore += points;
 
         if (currentScore % bombPerXScore == 0)
-            GridCreator.Instance.AttachBombToRandom();
+            GridSystem.Instance.AttachBombToRandom();
 
         UpdateScoreText();
     }

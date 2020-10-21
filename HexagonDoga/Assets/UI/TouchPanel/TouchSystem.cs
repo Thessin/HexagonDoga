@@ -74,7 +74,7 @@ public class TouchSystem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
             return;
         }
 
-        GridCreator.Instance.SelectGroup(cam.ScreenToWorldPoint(new Vector3(eventData.pressPosition.x, eventData.pressPosition.y, -cam.transform.position.z)));
+        GridSystem.Instance.SelectGroup(cam.ScreenToWorldPoint(new Vector3(eventData.pressPosition.x, eventData.pressPosition.y, -cam.transform.position.z)));
     }
 
     /// <summary>
@@ -83,8 +83,8 @@ public class TouchSystem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
     private void CalculateClockwiseRotation()
     {
         if (totalDegreesTurned > 0)
-            GridCreator.Instance.TurnSelected(false);
+            GridSystem.Instance.TurnSelected(false);
         else if (totalDegreesTurned < 0)
-            GridCreator.Instance.TurnSelected(true);
+            GridSystem.Instance.TurnSelected(true);
     }
 }

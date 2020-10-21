@@ -15,7 +15,7 @@ public class GameManager : Singleton<GameManager>
     public void GameRestart()
     {
         gameFinished = false;
-        GridCreator.Instance.RecreateGrid();
+        GridSystem.Instance.RecreateGrid();
         ScoringSystem.Instance.ResetScore();
     }
 

@@ -150,7 +150,7 @@ public class HexagonGroup
     /// <returns></returns>
     public bool IsExplodable()
     {
-        if (hexagons[0].IsDestroyed() && hexagons[1].IsDestroyed() && hexagons[2].IsDestroyed())                                // If any one of the hexagons is destroyed, the group can not be explodable.
+        if (hexagons[0].IsDestroyed() || hexagons[1].IsDestroyed() || hexagons[2].IsDestroyed())                                // If any one of the hexagons is destroyed, the group can not be explodable.
             return false;
 
         return hexagons[0].color.IsEqualColor(hexagons[1].color) && hexagons[0].color.IsEqualColor(hexagons[2].color);            // Check if all three hexagons' colors are equal.
@@ -166,7 +166,7 @@ public class HexagonGroup
             hex.DestroyHexagon();
         }
 
-        GridCreator.Instance.HexagonsDestroyed(hexagons);
+        GridSystem.Instance.HexagonsDestroyed(hexagons);
     }
 
     /// <summary>

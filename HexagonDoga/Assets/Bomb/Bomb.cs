@@ -16,12 +16,12 @@ public class Bomb : MonoBehaviour
 
     private void OnEnable()
     {
-        GridCreator.Instance.OnActionMade.AddListener(CountDown);
+        GridSystem.Instance.OnActionMade.AddListener(CountDown);
     }
 
     private void OnDisable()
     {
-        GridCreator.Instance.OnActionMade.RemoveListener(CountDown);
+        GridSystem.Instance.OnActionMade.RemoveListener(CountDown);
     }
 
     private void CountDown()

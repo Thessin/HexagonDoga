@@ -5,7 +5,7 @@ using UnityEngine;
 using DG.Tweening;
 using UnityEngine.Events;
 
-public class GridCreator : Singleton<GridCreator>
+public class GridSystem : Singleton<GridSystem>
 {
     [SerializeField] private GameObject gridGO;
     [SerializeField] private GameObject selectionGO;
@@ -371,9 +371,6 @@ public class GridCreator : Singleton<GridCreator>
                 foundDestructible = true;
             }
         }
-
-        if (!foundDestructible)         // If no destructible group is left, then the user action is finished.
-            OnActionMade?.Invoke();
     }
 
     /// <summary>
@@ -385,7 +382,7 @@ public class GridCreator : Singleton<GridCreator>
         if (selectedGroup != null)
         {
             selectedGroup.RotateGroup(clockWise);
-            //OnActionMade?.Invoke();
+            OnActionMade?.Invoke();
         }
     }
 
